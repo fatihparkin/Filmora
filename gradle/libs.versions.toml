@@ -1,5 +1,6 @@
 [versions]
 agp = "8.8.0"
+coilCompose = "2.0.0"
 compose = "2024.04.01"
 hiltAndroidGradlePlugin = "2.51"
 kotlin = "2.0.0"
@@ -21,6 +22,7 @@ uiAndroid = "1.7.8"
 runtimeLivedata = "1.7.8"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroidGradlePlugin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
