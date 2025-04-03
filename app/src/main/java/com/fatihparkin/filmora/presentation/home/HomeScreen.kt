@@ -16,13 +16,26 @@ import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel) {
+fun HomeScreen(
+    homeViewModel: HomeViewModel,
+    onNavigateToGenres: () -> Unit // 🔥 navigation için callback
+) {
     val movieResponse = homeViewModel.movieResponse.collectAsState(initial = null)
     val errorMessage = homeViewModel.errorMessage.collectAsState(initial = null)
 
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp)) {
+
+        // 🔹 Kategorilere Git Butonu
+        Button(
+            onClick = onNavigateToGenres,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "🎬 Kategorilere Göz At")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         errorMessage.value?.let {
             Text(text = it, color = Color.Red)

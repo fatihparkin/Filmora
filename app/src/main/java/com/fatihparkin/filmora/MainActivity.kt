@@ -4,28 +4,35 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.fatihparkin.filmora.presentation.home.HomeViewModel
+import com.fatihparkin.filmora.presentation.navigation.FilmoraNavGraph
 import com.fatihparkin.filmora.ui.theme.FilmoraTheme
 import dagger.hilt.android.AndroidEntryPoint
-import com.fatihparkin.filmora.presentation.home.HomeScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    // Hilt ile HomeViewModel'i enjekte ediyoruz
     private val homeViewModel: HomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 🔥 Popüler filmleri çekiyoruz
+        homeViewModel.fetchPopularMovies()
+
         setContent {
             FilmoraTheme {
-                // HomeScreen composable'ını çağırıyoruz ve homeViewModel'i parametre olarak veriyoruz
-                HomeScreen(homeViewModel = homeViewModel)
+                val navController = rememberNavController()
+                Surface(modifier = Modifier) {
+                    FilmoraNavGraph(
+                        navController = navController,
+                        homeViewModel = homeViewModel // viewModel’i gönderiyoruz
+                    )
+                }
             }
         }
-
-        // Popüler filmleri çekmek için fonksiyonu çağırıyoruz
-        homeViewModel.fetchPopularMovies()
     }
 }
