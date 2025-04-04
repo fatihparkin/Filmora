@@ -1,12 +1,11 @@
 package com.fatihparkin.filmora.presentation.genre
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,13 +18,13 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GenreMoviesScreen(
     genreId: Int,
     genreName: String,
     viewModel: GenreViewModel,
-    navController: NavController
+    navController: NavController,
+    onMovieClick: (Int) -> Unit
 ) {
     val movies = viewModel.moviesByGenre.collectAsState().value
     val error = viewModel.errorMessage.collectAsState().value
@@ -34,43 +33,35 @@ fun GenreMoviesScreen(
         viewModel.fetchMoviesByGenre(genreId)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = genreName) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Geri")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .fillMaxSize()
-        ) {
-            error?.let {
-                Text(text = it, color = Color.Red)
-            }
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(movies) { movie ->
-                    GenreMovieCard(movie = movie)
-                }
+        Text(
+            text = genreName,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        error?.let {
+            Text(text = it, color = Color.Red)
+        }
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(movies) { movie ->
+                GenreMovieCard(movie = movie, onClick = { onMovieClick(movie.id) })
             }
         }
     }
 }
 
 @Composable
-fun GenreMovieCard(movie: Movie) {
+fun GenreMovieCard(movie: Movie, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp),
+            .height(180.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
