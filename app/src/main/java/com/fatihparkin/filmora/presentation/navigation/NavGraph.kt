@@ -5,6 +5,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.fatihparkin.filmora.presentation.detail.MovieDetailScreen
+import com.fatihparkin.filmora.presentation.detail.MovieDetailViewModel
 import com.fatihparkin.filmora.presentation.genre.GenreMoviesScreen
 import com.fatihparkin.filmora.presentation.genre.GenreScreen
 import com.fatihparkin.filmora.presentation.genre.GenreViewModel
@@ -15,6 +17,7 @@ object ScreenRoutes {
     const val HOME = "home"
     const val GENRES = "genres"
     const val GENRE_MOVIES = "genre_movies"
+    const val MOVIE_DETAIL = "movie_detail"
 }
 
 @Composable
@@ -33,6 +36,9 @@ fun FilmoraNavGraph(
                 homeViewModel = homeViewModel,
                 onNavigateToGenres = {
                     navController.navigate(ScreenRoutes.GENRES)
+                },
+                onMovieClick = { movieId ->
+                    navController.navigate("${ScreenRoutes.MOVIE_DETAIL}/$movieId")
                 }
             )
         }
@@ -49,9 +55,7 @@ fun FilmoraNavGraph(
         }
 
         // Seçilen türe ait filmler
-        composable(
-            route = "${ScreenRoutes.GENRE_MOVIES}/{genreId}/{genreName}"
-        ) { backStackEntry ->
+        composable("${ScreenRoutes.GENRE_MOVIES}/{genreId}/{genreName}") { backStackEntry ->
             val genreId = backStackEntry.arguments?.getString("genreId")?.toIntOrNull() ?: return@composable
             val genreName = backStackEntry.arguments?.getString("genreName") ?: return@composable
             val genreViewModel: GenreViewModel = hiltViewModel()
@@ -60,6 +64,21 @@ fun FilmoraNavGraph(
                 genreId = genreId,
                 genreName = genreName,
                 viewModel = genreViewModel,
+                navController = navController,
+                onMovieClick = { movieId ->
+                    navController.navigate("${ScreenRoutes.MOVIE_DETAIL}/$movieId")
+                }
+            )
+        }
+
+        // Film Detay Sayfası
+        composable("${ScreenRoutes.MOVIE_DETAIL}/{movieId}") { backStackEntry ->
+            val movieId = backStackEntry.arguments?.getString("movieId")?.toIntOrNull() ?: return@composable
+            val viewModel: MovieDetailViewModel = hiltViewModel()
+
+            MovieDetailScreen(
+                movieId = movieId,
+                viewModel = viewModel,
                 navController = navController
             )
         }
