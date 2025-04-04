@@ -1,6 +1,7 @@
 package com.fatihparkin.filmora.presentation.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,8 @@ import com.fatihparkin.filmora.data.model.Movie
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
-    onNavigateToGenres: () -> Unit // 🔥 navigation için callback
+    onNavigateToGenres: () -> Unit,
+    onMovieClick: (Int) -> Unit
 ) {
     val movieResponse = homeViewModel.movieResponse.collectAsState(initial = null)
     val errorMessage = homeViewModel.errorMessage.collectAsState(initial = null)
@@ -27,7 +29,6 @@ fun HomeScreen(
         .fillMaxSize()
         .padding(16.dp)) {
 
-        // 🔹 Kategorilere Git Butonu
         Button(
             onClick = onNavigateToGenres,
             modifier = Modifier.fillMaxWidth()
@@ -42,11 +43,9 @@ fun HomeScreen(
         }
 
         movieResponse.value?.results?.let { movies ->
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(movies) { movie ->
-                    MovieCard(movie = movie)
+                    MovieCard(movie = movie, onClick = { onMovieClick(movie.id) })
                 }
             }
         } ?: run {
@@ -56,11 +55,12 @@ fun HomeScreen(
 }
 
 @Composable
-fun MovieCard(movie: Movie) {
+fun MovieCard(movie: Movie, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(200.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
