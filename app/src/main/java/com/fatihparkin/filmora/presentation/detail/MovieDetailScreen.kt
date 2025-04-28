@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,31 +28,42 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Cast
 import com.fatihparkin.filmora.data.model.Review
+import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 @Composable
 fun MovieDetailScreen(
     movieId: Int,
     viewModel: MovieDetailViewModel,
-    navController: NavController
+    navController: NavController,
+    favoriteViewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val movie = viewModel.movieDetail.collectAsState().value
     val videos = viewModel.videoList.collectAsState().value
     val castList = viewModel.castList.collectAsState().value
     val reviewList = viewModel.reviewList.collectAsState().value
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    val favoriteMovies = favoriteViewModel.favoriteMovies.collectAsState()
+    val isFavorite = favoriteMovies.value.any { it.id == movie?.id }
 
     LaunchedEffect(movieId) {
         viewModel.fetchMovieDetail(movieId)
         viewModel.fetchMovieVideos(movieId)
         viewModel.fetchCast(movieId)
         viewModel.fetchReviews(movieId)
+        favoriteViewModel.loadFavorites()
     }
 
     Scaffold(
@@ -59,12 +72,36 @@ fun MovieDetailScreen(
                 title = { Text(text = movie?.title ?: "Film Detayı") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Geri")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Geri")
+                    }
+                },
+                actions = {
+                    movie?.let {
+                        IconButton(onClick = {
+                            if (isFavorite) {
+                                favoriteViewModel.removeFavorite(it.id)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Favorilerden çıkarıldı")
+                                }
+                            } else {
+                                favoriteViewModel.addFavorite(it)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Favorilere eklendi")
+                                }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = "Favori",
+                                tint = if (isFavorite) Color.Red else Color.Gray
+                            )
+                        }
                     }
                 }
             )
         },
-        containerColor = Color(0xFFEAF6FF)
+        containerColor = Color(0xFFEAF6FF),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
 
         movie?.let {
@@ -183,7 +220,7 @@ fun MovieDetailScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // Yorumlar Bölümü
+                // Yorumlar
                 Text(
                     text = "Yorumlar",
                     style = MaterialTheme.typography.titleMedium,
@@ -206,9 +243,7 @@ fun MovieDetailScreen(
                             .fillMaxWidth()
                             .padding(vertical = 12.dp)
                     )
-
                 }
-
             }
         } ?: run {
             Box(
@@ -271,7 +306,7 @@ fun ReviewCard(review: Review) {
                 text = review.content,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 5,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
