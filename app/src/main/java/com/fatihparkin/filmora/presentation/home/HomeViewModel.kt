@@ -4,13 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fatihparkin.filmora.data.repository.MovieRepository
 import com.fatihparkin.filmora.data.model.MovieResponse
+import com.fatihparkin.filmora.data.mapper.toMovieEntityList
+import com.fatihparkin.filmora.data.mapper.toMovieList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@HiltViewModel // Hilt ile enjekte edileceğini belirtiyoruz
+@HiltViewModel
 class HomeViewModel @Inject constructor(
     private val movieRepository: MovieRepository
 ) : ViewModel() {
@@ -25,14 +27,30 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = movieRepository.getPopularMovies()
-                if (response.isSuccessful) {
-                    _movieResponse.value = response.body()
+                if (response.isSuccessful && response.body() != null) {
+                    val movieResponse = response.body()!!
+                    _movieResponse.value = movieResponse
+
+                    // Room'a kaydet
+                    movieRepository.refreshPopularMovies(movieResponse.toMovieEntityList())
                 } else {
-                    _errorMessage.value = "Error: ${response.message()}"
+                    _errorMessage.value = "Sunucudan veri alınamadı: ${response.message()}"
+                    loadLocalMovies()
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Error: ${e.localizedMessage}"
+                _errorMessage.value = "Hata: ${e.localizedMessage}"
+                loadLocalMovies()
             }
         }
+    }
+
+    private suspend fun loadLocalMovies() {
+        val localMovies = movieRepository.getLocalPopularMovies()
+        _movieResponse.value = MovieResponse(
+            page = 1,
+            results = localMovies.toMovieList(),
+            total_pages = 1,
+            total_results = localMovies.size
+        )
     }
 }

@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,40 +18,57 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
     onNavigateToGenres: () -> Unit,
-    onMovieClick: (Int) -> Unit
+    onMovieClick: (Int) -> Unit,
+    onNavigateToSettings: () -> Unit // ✅ Ayarlar ikonuna tıklayınca çalışacak
 ) {
     val movieResponse = homeViewModel.movieResponse.collectAsState(initial = null)
     val errorMessage = homeViewModel.errorMessage.collectAsState(initial = null)
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
-
-        Button(
-            onClick = onNavigateToGenres,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "🎬 Kategorilere Göz At")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        errorMessage.value?.let {
-            Text(text = it, color = Color.Red)
-        }
-
-        movieResponse.value?.results?.let { movies ->
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(movies) { movie ->
-                    MovieCard(movie = movie, onClick = { onMovieClick(movie.id) })
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Filmora") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Ayarlar")
+                    }
                 }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Button(
+                onClick = onNavigateToGenres,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "🎬 Kategorilere Göz At")
             }
-        } ?: run {
-            Text(text = "Loading...", style = MaterialTheme.typography.bodyLarge)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            errorMessage.value?.let {
+                Text(text = it, color = Color.Red)
+            }
+
+            movieResponse.value?.results?.let { movies ->
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(movies) { movie ->
+                        MovieCard(movie = movie, onClick = { onMovieClick(movie.id) })
+                    }
+                }
+            } ?: run {
+                Text(text = "Loading...", style = MaterialTheme.typography.bodyLarge)
+            }
         }
     }
 }

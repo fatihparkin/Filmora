@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "26397828585",
+    "project_id": "filmora-d8a17",
+    "storage_bucket": "filmora-d8a17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:26397828585:android:19e893faf77d307f0c9778",
+        "android_client_info": {
+          "package_name": "com.fatihparkin.filmora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwgwnRUJ1nKxdPp6MnzJiiC4TMY0M_7e8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
