@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.1"
+compose-material-icons = "1.5.4"
 coilCompose = "2.0.0"
 compose = "2024.04.01"
 firebaseAnalytics = "21.5.0"
@@ -31,6 +32,7 @@ navigationCompose = "2.8.9"
 roomCommonJvm = "2.7.1"
 roomRuntimeAndroid = "2.7.1"
 [libraries]
+compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
 compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "composeCompiler" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }

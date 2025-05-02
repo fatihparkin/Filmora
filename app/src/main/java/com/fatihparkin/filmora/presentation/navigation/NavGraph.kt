@@ -100,7 +100,7 @@ fun FilmoraNavGraph(
         }
 
         composable(ScreenRoutes.SETTINGS) {
-            SettingsScreen()
+            SettingsScreen(navController = navController)
         }
 
         composable(ScreenRoutes.FAVORITES) {
