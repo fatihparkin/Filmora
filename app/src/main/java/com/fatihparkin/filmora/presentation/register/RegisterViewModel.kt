@@ -15,6 +15,9 @@ class RegisterViewModel : ViewModel() {
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password
 
+    private val _confirmPassword = MutableStateFlow("")
+    val confirmPassword: StateFlow<String> = _confirmPassword
+
     private val _registerResult = MutableStateFlow<String?>(null)
     val registerResult: StateFlow<String?> = _registerResult
 
@@ -28,7 +31,16 @@ class RegisterViewModel : ViewModel() {
         _password.value = newPassword
     }
 
+    fun onConfirmPasswordChange(newConfirmPassword: String) {
+        _confirmPassword.value = newConfirmPassword
+    }
+
     fun registerUser() {
+        if (password.value != confirmPassword.value) {
+            _registerResult.value = "Şifreler eşleşmiyor!"
+            return
+        }
+
         viewModelScope.launch {
             auth.createUserWithEmailAndPassword(email.value, password.value)
                 .addOnCompleteListener { task ->
