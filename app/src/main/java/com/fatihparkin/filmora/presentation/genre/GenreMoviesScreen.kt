@@ -1,13 +1,15 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.fatihparkin.filmora.presentation.genre
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
@@ -15,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,35 +43,43 @@ fun GenreMoviesScreen(
         favoriteViewModel.loadFavorites()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = genreName,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        error?.let {
-            Text(text = it, color = Color.Red)
-        }
-
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(movies) { movie ->
-                GenreMovieCard(
-                    movie = movie,
-                    onClick = { onMovieClick(movie.id) },
-                    isFavorite = favoriteViewModel.favoriteMovies.collectAsState().value.any { it.id == movie.id },
-                    onToggleFavorite = {
-                        if (favoriteViewModel.favoriteMovies.value.any { it.id == movie.id }) {
-                            favoriteViewModel.removeFavorite(movie.id)
-                        } else {
-                            favoriteViewModel.addFavorite(movie)
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(genreName, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Geri")
                     }
-                )
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            error?.let {
+                Text(text = it, color = Color.Red)
+            }
+
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(movies) { movie ->
+                    GenreMovieCard(
+                        movie = movie,
+                        isFavorite = favoriteViewModel.favoriteMovies.collectAsState().value.any { it.id == movie.id },
+                        onToggleFavorite = {
+                            if (favoriteViewModel.favoriteMovies.value.any { it.id == movie.id }) {
+                                favoriteViewModel.removeFavorite(movie.id)
+                            } else {
+                                favoriteViewModel.addFavorite(movie)
+                            }
+                        },
+                        onClick = { onMovieClick(movie.id) }
+                    )
+                }
             }
         }
     }
@@ -77,17 +88,17 @@ fun GenreMoviesScreen(
 @Composable
 fun GenreMovieCard(
     movie: Movie,
-    onClick: () -> Unit,
     isFavorite: Boolean,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(190.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Row(
             modifier = Modifier
@@ -130,12 +141,12 @@ fun GenreMovieCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Release: ${movie.release_date}",
+                        text = "Çıkış: ${movie.release_date}",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.Gray
                     )
 
-                    IconButton(onClick = { onToggleFavorite() }) {
+                    IconButton(onClick = onToggleFavorite) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "Favori",
