@@ -70,9 +70,11 @@ fun FilmoraNavGraph(
                 viewModel = genreViewModel,
                 onGenreClick = { id, name ->
                     navController.navigate("${ScreenRoutes.GENRE_MOVIES}/$id/$name")
-                }
+                },
+                navController = navController //
             )
         }
+
 
         composable("${ScreenRoutes.GENRE_MOVIES}/{genreId}/{genreName}") { backStackEntry ->
             val genreId = backStackEntry.arguments?.getString("genreId")?.toIntOrNull() ?: return@composable

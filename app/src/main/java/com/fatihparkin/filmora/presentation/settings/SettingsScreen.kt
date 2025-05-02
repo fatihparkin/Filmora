@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,7 +39,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ayarlar") }
+                title = { Text("Ayarlar") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Geri Dön")
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -48,8 +55,7 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
+                modifier = Modifier.weight(1f)
             ) {
                 item {
                     Text(
@@ -96,7 +102,6 @@ fun SettingsScreen(
                     }
                 }
 
-                // SSS
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -121,7 +126,6 @@ fun SettingsScreen(
                     }
                 }
 
-                // İletişim
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
@@ -160,12 +164,12 @@ fun SettingsScreen(
                 }
             }
 
-            // ✅ Çıkış Butonu
+            // Çıkış Butonu
             Button(
                 onClick = {
                     FirebaseAuth.getInstance().signOut()
                     navController.navigate(ScreenRoutes.LOGIN) {
-                        popUpTo(0) // Stack temizle
+                        popUpTo(0)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
