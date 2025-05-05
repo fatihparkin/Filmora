@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Settings
@@ -39,6 +40,10 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    val currentSortOption by homeViewModel.currentSortOption.collectAsState()
+
+    var expanded by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         favoriteViewModel.loadFavorites()
     }
@@ -56,26 +61,76 @@ fun HomeScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Button(
-                onClick = onNavigateToGenres,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "🎬 Kategorilere Göz At")
+                Button(
+                    onClick = onNavigateToGenres,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                ) {
+                    Text(text = "🎬 Kategoriler")
+                }
+
+                Button(
+                    onClick = onNavigateToFavorites,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                ) {
+                    Text(text = "⭐ Favoriler")
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onNavigateToFavorites,
-                modifier = Modifier.fillMaxWidth()
+            // Sıralama başlığı
+            Text(
+                text = "Sıralama Seç:",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            // Sıralama Dropdown
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
             ) {
-                Text(text = "⭐ Favorilerim")
+                OutlinedTextField(
+                    value = currentSortOption?.displayName ?: "Varsayılan",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "Sıralama Seç")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    SortOption.values().forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.displayName) },
+                            onClick = {
+                                homeViewModel.sortMovies(option)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

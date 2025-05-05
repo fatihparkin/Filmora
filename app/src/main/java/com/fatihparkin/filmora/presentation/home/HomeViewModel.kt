@@ -23,6 +23,9 @@ class HomeViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _currentSortOption = MutableStateFlow<SortOption?>(null)
+    val currentSortOption: StateFlow<SortOption?> = _currentSortOption
+
     fun fetchPopularMovies() {
         viewModelScope.launch {
             try {
@@ -53,4 +56,23 @@ class HomeViewModel @Inject constructor(
             total_results = localMovies.size
         )
     }
+
+    fun sortMovies(option: SortOption) {
+        val movies = _movieResponse.value?.results ?: return
+
+        val sortedMovies = when (option) {
+            SortOption.RATING_HIGH_TO_LOW -> movies.sortedByDescending { it.vote_average }
+            SortOption.RATING_LOW_TO_HIGH -> movies.sortedBy { it.vote_average }
+            SortOption.DATE_NEW_TO_OLD -> movies.sortedByDescending { it.release_date }
+            SortOption.DATE_OLD_TO_NEW -> movies.sortedBy { it.release_date }
+        }
+
+        _movieResponse.value = _movieResponse.value?.copy(results = sortedMovies)
+        _currentSortOption.value = option
+    }
+    fun resetSorting() {
+        fetchPopularMovies()
+        _currentSortOption.value = null
+    }
+
 }
