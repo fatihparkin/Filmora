@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fatihparkin.filmora.data.model.Genre
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.data.repository.GenreRepository
+import com.fatihparkin.filmora.presentation.home.SortOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,9 @@ class GenreViewModel @Inject constructor(
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
+
+    private val _currentSortOption = MutableStateFlow<SortOption?>(null)
+    val currentSortOption: StateFlow<SortOption?> = _currentSortOption
 
     fun fetchGenres() {
         viewModelScope.launch {
@@ -46,6 +50,7 @@ class GenreViewModel @Inject constructor(
                 val response = genreRepository.getMoviesByGenre(genreId)
                 if (response.isSuccessful) {
                     _moviesByGenre.value = response.body()?.results ?: emptyList()
+                    _currentSortOption.value = null // sıfırlıyoruz
                 } else {
                     _errorMessage.value = "Filmler alınamadı"
                 }
@@ -53,5 +58,21 @@ class GenreViewModel @Inject constructor(
                 _errorMessage.value = e.localizedMessage
             }
         }
+    }
+
+    fun sortMovies(option: SortOption) {
+        val movies = _moviesByGenre.value
+        val sortedMovies = when (option) {
+            SortOption.RATING_HIGH_TO_LOW -> movies.sortedByDescending { it.vote_average }
+            SortOption.RATING_LOW_TO_HIGH -> movies.sortedBy { it.vote_average }
+            SortOption.DATE_NEW_TO_OLD -> movies.sortedByDescending { it.release_date }
+            SortOption.DATE_OLD_TO_NEW -> movies.sortedBy { it.release_date }
+        }
+        _moviesByGenre.value = sortedMovies
+        _currentSortOption.value = option
+    }
+
+    fun resetSorting() {
+        _currentSortOption.value = null
     }
 }
