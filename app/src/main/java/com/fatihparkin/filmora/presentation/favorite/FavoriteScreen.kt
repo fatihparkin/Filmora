@@ -120,7 +120,11 @@ fun MovieFavoriteItem(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Çıkış Tarihi: ${movie.release_date}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Puan: ${movie.vote_average}", style = MaterialTheme.typography.bodyMedium)
+                val formattedVote = remember(movie.vote_average) {
+                    String.format("%.1f", movie.vote_average)
+                }
+
+                Text(text = "Puan: $formattedVote", style = MaterialTheme.typography.bodyMedium)
             }
 
             IconButton(onClick = { onRemoveClick(movie) }) {
