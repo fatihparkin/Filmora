@@ -9,11 +9,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,6 +45,7 @@ fun GenreMoviesScreen(
     val scope = rememberCoroutineScope()
 
     var expanded by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
 
     LaunchedEffect(genreId) {
         viewModel.fetchMoviesByGenre(genreId)
@@ -68,6 +71,21 @@ fun GenreMoviesScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            // Arama Alanı
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Film ara...") },
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = "Ara")
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            )
+
+            // Sıralama Alanı
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -111,25 +129,41 @@ fun GenreMoviesScreen(
                 Text(text = it, color = Color.Red)
             }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(movies) { movie ->
-                    val isFavorite = favoriteMovies.value.any { it.id == movie.id }
-                    GenreMovieItem(
-                        movie = movie,
-                        isFavorite = isFavorite,
-                        onClick = { onMovieClick(movie.id) },
-                        onFavoriteClick = {
-                            scope.launch {
-                                if (isFavorite) {
-                                    favoriteViewModel.removeFavorite(movie.id)
-                                    snackbarHostState.showSnackbar("Favorilerden kaldırıldı")
-                                } else {
-                                    favoriteViewModel.addFavorite(movie)
-                                    snackbarHostState.showSnackbar("Favorilere eklendi")
+            // Film Listesi
+            val filteredMovies = if (searchQuery.text.isEmpty()) {
+                movies
+            } else {
+                movies.filter { it.title.contains(searchQuery.text, ignoreCase = true) }
+            }
+
+            if (filteredMovies.isEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Aradığınız film bulunamadı.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(filteredMovies) { movie ->
+                        val isFavorite = favoriteMovies.value.any { it.id == movie.id }
+                        GenreMovieItem(
+                            movie = movie,
+                            isFavorite = isFavorite,
+                            onClick = { onMovieClick(movie.id) },
+                            onFavoriteClick = {
+                                scope.launch {
+                                    if (isFavorite) {
+                                        favoriteViewModel.removeFavorite(movie.id)
+                                        snackbarHostState.showSnackbar("Favorilerden kaldırıldı")
+                                    } else {
+                                        favoriteViewModel.addFavorite(movie)
+                                        snackbarHostState.showSnackbar("Favorilere eklendi")
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
