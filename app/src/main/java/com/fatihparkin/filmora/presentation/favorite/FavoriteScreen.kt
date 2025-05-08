@@ -1,6 +1,7 @@
 package com.fatihparkin.filmora.presentation.favorite.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
+import com.fatihparkin.filmora.presentation.navigation.ScreenRoutes
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,6 +83,9 @@ fun FavoriteScreen(
                                     duration = SnackbarDuration.Short
                                 )
                             }
+                        },
+                        onMovieClick = {
+                            navController.navigate("${ScreenRoutes.MOVIE_DETAIL}/${movie.id}")
                         }
                     )
                 }
@@ -92,12 +97,14 @@ fun FavoriteScreen(
 @Composable
 fun MovieFavoriteItem(
     movie: Movie,
-    onRemoveClick: (Movie) -> Unit
+    onRemoveClick: (Movie) -> Unit,
+    onMovieClick: (Movie) -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
+            .clickable { onMovieClick(movie) } //  Kart tıklanınca detay ekranına yönlendirme
     ) {
         Row(modifier = Modifier.padding(8.dp)) {
             Image(
@@ -120,10 +127,10 @@ fun MovieFavoriteItem(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Çıkış Tarihi: ${movie.release_date}", style = MaterialTheme.typography.bodyMedium)
+
                 val formattedVote = remember(movie.vote_average) {
                     String.format("%.1f", movie.vote_average)
                 }
-
                 Text(text = "Puan: $formattedVote", style = MaterialTheme.typography.bodyMedium)
             }
 
