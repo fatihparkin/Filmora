@@ -43,9 +43,8 @@ fun GenreMoviesScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var expandedSort by remember { mutableStateOf(false) }
-    var expandedFilter by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedSegment by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(genreId) {
         viewModel.fetchMoviesByGenre(genreId)
@@ -55,7 +54,7 @@ fun GenreMoviesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(genreName, style = MaterialTheme.typography.titleLarge) },
+                title = { Text(genreName) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Geri")
@@ -71,93 +70,81 @@ fun GenreMoviesScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Arama Alanı
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 label = { Text("Film ara...") },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = "Ara")
-                },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
             )
 
-            // Sıralama ve Filtreleme Alanı
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text(text = "Sırala: ", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Box {
-                    Button(
-                        onClick = { expandedSort = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text(text = currentSortOption?.displayName ?: "Varsayılan", color = Color.White)
-                    }
-                    DropdownMenu(
-                        expanded = expandedSort,
-                        onDismissRequest = { expandedSort = false }
-                    ) {
-                        SortOption.values().forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option.displayName) },
-                                onClick = {
-                                    expandedSort = false
-                                    viewModel.sortMovies(option)
-                                }
-                            )
-                        }
-                        DropdownMenuItem(
-                            text = { Text("Varsayılan") },
-                            onClick = {
-                                expandedSort = false
-                                viewModel.fetchMoviesByGenre(genreId)
-                            }
+                listOf("Filtre", "Sırala").forEach { item ->
+                    OutlinedButton(
+                        onClick = { selectedSegment = if (selectedSegment == item) null else item },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (selectedSegment == item) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            contentColor = if (selectedSegment == item) Color.White else MaterialTheme.colorScheme.onSurface
                         )
+                    ) {
+                        Text(item)
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Box {
-                    Button(
-                        onClick = { expandedFilter = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(text = "Filtrele", color = Color.White)
+            when (selectedSegment) {
+                "Filtre" -> {
+                    Column {
+                        FilterOption.values().forEach { filter ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val newFilters = selectedFilters.toMutableList()
+                                        if (newFilters.contains(filter)) newFilters.remove(filter) else newFilters.add(filter)
+                                        viewModel.updateFilters(newFilters)
+                                    }
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = selectedFilters.contains(filter),
+                                    onCheckedChange = null
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(filter.displayName)
+                            }
+                        }
                     }
-                    DropdownMenu(
-                        expanded = expandedFilter,
-                        onDismissRequest = { expandedFilter = false }
-                    ) {
-                        FilterOption.values().forEach { filterOption ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(
-                                            checked = selectedFilters.contains(filterOption),
-                                            onCheckedChange = null
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(filterOption.displayName)
-                                    }
-                                },
+                }
+                "Sırala" -> {
+                    Column {
+                        SortOption.values().forEach { option ->
+                            TextButton(
                                 onClick = {
-                                    val newFilters = selectedFilters.toMutableList()
-                                    if (newFilters.contains(filterOption)) {
-                                        newFilters.remove(filterOption)
-                                    } else {
-                                        newFilters.add(filterOption)
-                                    }
-                                    viewModel.updateFilters(newFilters)
-                                }
-                            )
+                                    viewModel.sortMovies(option)
+                                    selectedSegment = null
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(option.displayName)
+                            }
+                        }
+                        TextButton(
+                            onClick = {
+                                viewModel.resetSorting()
+                                selectedSegment = null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Varsayılan")
                         }
                     }
                 }
@@ -169,7 +156,6 @@ fun GenreMoviesScreen(
                 Text(text = it, color = Color.Red)
             }
 
-            // Film Listesi
             val filteredMovies = if (searchQuery.text.isEmpty()) {
                 movies
             } else {
