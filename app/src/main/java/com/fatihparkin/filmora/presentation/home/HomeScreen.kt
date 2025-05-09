@@ -7,10 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,8 +39,10 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
-    var expandedFilter by remember { mutableStateOf(false) }
+    var activePanel by remember { mutableStateOf<String?>(null) }
+
     val selectedFilters = homeViewModel.selectedFilters.collectAsState().value
+    val currentSortOption = homeViewModel.currentSortOption.collectAsState().value
 
     LaunchedEffect(Unit) {
         favoriteViewModel.loadFavorites()
@@ -84,48 +83,57 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 3 Buton Yan Yana
+            // Segment Menü - 4 ikonlu kontrol
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Button(
-                    onClick = { expandedFilter = true },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text(text = "🧹 Filtrele")
+                IconButton(onClick = {
+                    activePanel = if (activePanel == "filtre") null else "filtre"
+                }) {
+                    Icon(Icons.Default.Tune, contentDescription = "Filtrele")
                 }
-
-                Button(
-                    onClick = onNavigateToGenres,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text(text = "🎬 Kategoriler")
+                IconButton(onClick = {
+                    activePanel = if (activePanel == "sirala") null else "sirala"
+                }) {
+                    Icon(Icons.Default.Sort, contentDescription = "Sırala")
                 }
-
-                Button(
-                    onClick = onNavigateToFavorites,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text(text = "⭐ Favoriler")
+                IconButton(onClick = {
+                    onNavigateToGenres()
+                    activePanel = null
+                }) {
+                    Icon(Icons.Default.Category, contentDescription = "Kategoriler")
+                }
+                IconButton(onClick = {
+                    onNavigateToFavorites()
+                    activePanel = null
+                }) {
+                    Icon(Icons.Default.FavoriteBorder, contentDescription = "Favoriler")
                 }
             }
 
-            DropdownMenu(
-                expanded = expandedFilter,
-                onDismissRequest = { expandedFilter = false }
-            ) {
-                FilterOption.values().forEach { filterOption ->
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Aktif panelin içeriği
+            when (activePanel) {
+                "filtre" -> {
+                    Column {
+                        FilterOption.values().forEach { filterOption ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val newFilters = selectedFilters.toMutableList()
+                                        if (newFilters.contains(filterOption)) {
+                                            newFilters.remove(filterOption)
+                                        } else {
+                                            newFilters.add(filterOption)
+                                        }
+                                        homeViewModel.updateFilters(newFilters)
+                                    }
+                                    .padding(8.dp)
+                            ) {
                                 Checkbox(
                                     checked = selectedFilters.contains(filterOption),
                                     onCheckedChange = null
@@ -133,27 +141,44 @@ fun HomeScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(filterOption.displayName)
                             }
-                        },
-                        onClick = {
-                            val newFilters = selectedFilters.toMutableList()
-                            if (newFilters.contains(filterOption)) {
-                                newFilters.remove(filterOption)
-                            } else {
-                                newFilters.add(filterOption)
-                            }
-                            homeViewModel.updateFilters(newFilters)
-                            expandedFilter = false
                         }
-                    )
+                    }
+                }
+
+                "sirala" -> {
+                    Column {
+                        SortOption.values().forEach { option ->
+                            TextButton(
+                                onClick = {
+                                    homeViewModel.sortMovies(option)
+                                    activePanel = null
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(option.displayName)
+                            }
+                        }
+                        TextButton(
+                            onClick = {
+                                homeViewModel.resetSorting()
+                                activePanel = null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Varsayılan")
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
+            // Hata mesajı
             errorMessage.value?.let {
                 Text(text = it, color = Color.Red)
             }
 
+            // Film listesi
             movieResponse.value?.results?.let { movies ->
                 val filteredMovies = if (searchQuery.text.isEmpty()) {
                     movies
@@ -220,7 +245,6 @@ fun MovieCard(
                     .fillMaxHeight()
                     .width(130.dp)
             )
-
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -246,7 +270,6 @@ fun MovieCard(
                     color = Color.Gray
                 )
             }
-
             IconButton(
                 onClick = onFavoriteClick,
                 modifier = Modifier

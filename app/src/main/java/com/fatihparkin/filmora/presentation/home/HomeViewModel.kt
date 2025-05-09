@@ -29,12 +29,15 @@ class HomeViewModel @Inject constructor(
     private val _selectedFilters = MutableStateFlow<List<FilterOption>>(emptyList())
     val selectedFilters: StateFlow<List<FilterOption>> = _selectedFilters
 
+    private var originalMovies = emptyList<com.fatihparkin.filmora.data.model.Movie>()
+
     fun fetchPopularMovies() {
         viewModelScope.launch {
             try {
                 val response = movieRepository.getPopularMovies()
                 if (response.isSuccessful && response.body() != null) {
                     val movieResponse = response.body()!!
+                    originalMovies = movieResponse.results
                     _movieResponse.value = movieResponse
 
                     // Room'a kaydet
@@ -52,41 +55,31 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun loadLocalMovies() {
         val localMovies = movieRepository.getLocalPopularMovies()
+        originalMovies = localMovies.toMovieList()
         _movieResponse.value = MovieResponse(
             page = 1,
-            results = localMovies.toMovieList(),
+            results = originalMovies,
             total_pages = 1,
-            total_results = localMovies.size
+            total_results = originalMovies.size
         )
     }
 
     fun sortMovies(option: SortOption) {
-        val movies = _movieResponse.value?.results ?: return
-
-        val sortedMovies = when (option) {
-            SortOption.RATING_HIGH_TO_LOW -> movies.sortedByDescending { it.vote_average }
-            SortOption.RATING_LOW_TO_HIGH -> movies.sortedBy { it.vote_average }
-            SortOption.DATE_NEW_TO_OLD -> movies.sortedByDescending { it.release_date }
-            SortOption.DATE_OLD_TO_NEW -> movies.sortedBy { it.release_date }
-        }
-
-        _movieResponse.value = _movieResponse.value?.copy(results = sortedMovies)
         _currentSortOption.value = option
+        applyFiltersAndSort()
     }
 
     fun resetSorting() {
-        fetchPopularMovies()
         _currentSortOption.value = null
+        applyFiltersAndSort()
     }
 
     fun updateFilters(selected: List<FilterOption>) {
         _selectedFilters.value = selected
-        applyFilters()
+        applyFiltersAndSort()
     }
 
-    private fun applyFilters() {
-        val originalMovies = _movieResponse.value?.results ?: return
-
+    private fun applyFiltersAndSort() {
         var filtered = originalMovies
 
         selectedFilters.value.forEach { filter ->
@@ -98,6 +91,15 @@ class HomeViewModel @Inject constructor(
                 FilterOption.YEAR_AFTER_2000 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2000 }
                 FilterOption.YEAR_AFTER_2010 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2010 }
                 FilterOption.YEAR_AFTER_2020 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2020 }
+            }
+        }
+
+        currentSortOption.value?.let { option ->
+            filtered = when (option) {
+                SortOption.RATING_HIGH_TO_LOW -> filtered.sortedByDescending { it.vote_average }
+                SortOption.RATING_LOW_TO_HIGH -> filtered.sortedBy { it.vote_average }
+                SortOption.DATE_NEW_TO_OLD -> filtered.sortedByDescending { it.release_date }
+                SortOption.DATE_OLD_TO_NEW -> filtered.sortedBy { it.release_date }
             }
         }
 
