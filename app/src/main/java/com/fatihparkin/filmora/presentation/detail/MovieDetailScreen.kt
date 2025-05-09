@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -184,22 +185,37 @@ fun MovieDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Fragman Butonu
+                // Fragman Embed
                 if (videos.isNotEmpty()) {
                     val trailer = videos.first()
-                    Button(
-                        onClick = {
-                            val intent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://www.youtube.com/watch?v=${trailer.key}")
-                            )
-                            context.startActivity(intent)
+                    val videoUrl = "https://www.youtube.com/embed/${trailer.key}"
+
+                    AndroidView(
+                        factory = {
+                            android.webkit.WebView(it).apply {
+                                settings.javaScriptEnabled = true
+                                loadUrl(videoUrl)
+                                layoutParams = android.view.ViewGroup.LayoutParams(
+                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                                    600
+                                )
+                            }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(text = "🎬 Fragmanı İzle")
-                    }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(vertical = 8.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                } else {
+                    Text(
+                        text = "Fragman bulunamadı.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
                 }
+
 
                 Spacer(modifier = Modifier.height(20.dp))
 
