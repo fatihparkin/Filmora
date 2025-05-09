@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +21,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
 import com.fatihparkin.filmora.presentation.home.SortOption
+import com.fatihparkin.filmora.presentation.home.FilterOption
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,13 +36,15 @@ fun GenreMoviesScreen(
     val movies = viewModel.moviesByGenre.collectAsState().value
     val errorMessage = viewModel.errorMessage.collectAsState().value
     val currentSortOption = viewModel.currentSortOption.collectAsState().value
+    val selectedFilters = viewModel.selectedFilters.collectAsState().value
 
     val favoriteViewModel: FavoriteViewModel = hiltViewModel()
     val favoriteMovies = favoriteViewModel.favoriteMovies.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var expanded by remember { mutableStateOf(false) }
+    var expandedSort by remember { mutableStateOf(false) }
+    var expandedFilter by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
 
     LaunchedEffect(genreId) {
@@ -85,29 +85,30 @@ fun GenreMoviesScreen(
                     .padding(bottom = 12.dp)
             )
 
-            // Sıralama Alanı
+            // Sıralama ve Filtreleme Alanı
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Sırala: ", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Box {
                     Button(
-                        onClick = { expanded = true },
+                        onClick = { expandedSort = true },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text(text = currentSortOption?.displayName ?: "Varsayılan", color = Color.White)
                     }
                     DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        expanded = expandedSort,
+                        onDismissRequest = { expandedSort = false }
                     ) {
                         SortOption.values().forEach { option ->
                             DropdownMenuItem(
                                 text = { Text(option.displayName) },
                                 onClick = {
-                                    expanded = false
+                                    expandedSort = false
                                     viewModel.sortMovies(option)
                                 }
                             )
@@ -115,10 +116,49 @@ fun GenreMoviesScreen(
                         DropdownMenuItem(
                             text = { Text("Varsayılan") },
                             onClick = {
-                                expanded = false
+                                expandedSort = false
                                 viewModel.fetchMoviesByGenre(genreId)
                             }
                         )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Box {
+                    Button(
+                        onClick = { expandedFilter = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Text(text = "Filtrele", color = Color.White)
+                    }
+                    DropdownMenu(
+                        expanded = expandedFilter,
+                        onDismissRequest = { expandedFilter = false }
+                    ) {
+                        FilterOption.values().forEach { filterOption ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(
+                                            checked = selectedFilters.contains(filterOption),
+                                            onCheckedChange = null
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(filterOption.displayName)
+                                    }
+                                },
+                                onClick = {
+                                    val newFilters = selectedFilters.toMutableList()
+                                    if (newFilters.contains(filterOption)) {
+                                        newFilters.remove(filterOption)
+                                    } else {
+                                        newFilters.add(filterOption)
+                                    }
+                                    viewModel.updateFilters(newFilters)
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -6,6 +6,7 @@ import com.fatihparkin.filmora.data.model.Genre
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.data.repository.GenreRepository
 import com.fatihparkin.filmora.presentation.home.SortOption
+import com.fatihparkin.filmora.presentation.home.FilterOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,11 @@ class GenreViewModel @Inject constructor(
     private val _currentSortOption = MutableStateFlow<SortOption?>(null)
     val currentSortOption: StateFlow<SortOption?> = _currentSortOption
 
+    private val _selectedFilters = MutableStateFlow<List<FilterOption>>(emptyList())
+    val selectedFilters: StateFlow<List<FilterOption>> = _selectedFilters
+
+    private var originalMovies: List<Movie> = emptyList()
+
     fun fetchGenres() {
         viewModelScope.launch {
             try {
@@ -49,8 +55,11 @@ class GenreViewModel @Inject constructor(
             try {
                 val response = genreRepository.getMoviesByGenre(genreId)
                 if (response.isSuccessful) {
-                    _moviesByGenre.value = response.body()?.results ?: emptyList()
-                    _currentSortOption.value = null // sıfırlıyoruz
+                    val movies = response.body()?.results ?: emptyList()
+                    _moviesByGenre.value = movies
+                    originalMovies = movies
+                    _currentSortOption.value = null
+                    _selectedFilters.value = emptyList()
                 } else {
                     _errorMessage.value = "Filmler alınamadı"
                 }
@@ -74,5 +83,29 @@ class GenreViewModel @Inject constructor(
 
     fun resetSorting() {
         _currentSortOption.value = null
+        _moviesByGenre.value = originalMovies
+    }
+
+    fun updateFilters(selected: List<FilterOption>) {
+        _selectedFilters.value = selected
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        var filtered = originalMovies
+
+        selectedFilters.value.forEach { filter ->
+            filtered = when (filter) {
+                FilterOption.IMDB_ABOVE_5 -> filtered.filter { it.vote_average >= 5 }
+                FilterOption.IMDB_ABOVE_7 -> filtered.filter { it.vote_average >= 7 }
+                FilterOption.IMDB_ABOVE_8 -> filtered.filter { it.vote_average >= 8 }
+                FilterOption.YEAR_AFTER_1990 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 1990 }
+                FilterOption.YEAR_AFTER_2000 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2000 }
+                FilterOption.YEAR_AFTER_2010 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2010 }
+                FilterOption.YEAR_AFTER_2020 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2020 }
+            }
+        }
+
+        _moviesByGenre.value = filtered
     }
 }

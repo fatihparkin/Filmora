@@ -42,6 +42,8 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+    var expandedFilter by remember { mutableStateOf(false) }
+    val selectedFilters = homeViewModel.selectedFilters.collectAsState().value
 
     LaunchedEffect(Unit) {
         favoriteViewModel.loadFavorites()
@@ -66,7 +68,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            //  Arama Alanı
+            // Arama Alanı
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -80,22 +82,70 @@ fun HomeScreen(
                     .padding(bottom = 12.dp)
             )
 
-            //  Kategoriler Butonu
-            Button(
-                onClick = onNavigateToGenres,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "🎬 Kategorilere Göz At")
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
 
-            //  Favoriler Butonu
-            Button(
-                onClick = onNavigateToFavorites,
-                modifier = Modifier.fillMaxWidth()
+            // 3 Buton Yan Yana
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = "⭐ Favorilerim")
+                Button(
+                    onClick = { expandedFilter = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text(text = "🧹 Filtrele")
+                }
+
+                Button(
+                    onClick = onNavigateToGenres,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text(text = "🎬 Kategoriler")
+                }
+
+                Button(
+                    onClick = onNavigateToFavorites,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text(text = "⭐ Favoriler")
+                }
+            }
+
+            DropdownMenu(
+                expanded = expandedFilter,
+                onDismissRequest = { expandedFilter = false }
+            ) {
+                FilterOption.values().forEach { filterOption ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = selectedFilters.contains(filterOption),
+                                    onCheckedChange = null
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(filterOption.displayName)
+                            }
+                        },
+                        onClick = {
+                            val newFilters = selectedFilters.toMutableList()
+                            if (newFilters.contains(filterOption)) {
+                                newFilters.remove(filterOption)
+                            } else {
+                                newFilters.add(filterOption)
+                            }
+                            homeViewModel.updateFilters(newFilters)
+                            expandedFilter = false
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -26,6 +26,9 @@ class HomeViewModel @Inject constructor(
     private val _currentSortOption = MutableStateFlow<SortOption?>(null)
     val currentSortOption: StateFlow<SortOption?> = _currentSortOption
 
+    private val _selectedFilters = MutableStateFlow<List<FilterOption>>(emptyList())
+    val selectedFilters: StateFlow<List<FilterOption>> = _selectedFilters
+
     fun fetchPopularMovies() {
         viewModelScope.launch {
             try {
@@ -70,9 +73,34 @@ class HomeViewModel @Inject constructor(
         _movieResponse.value = _movieResponse.value?.copy(results = sortedMovies)
         _currentSortOption.value = option
     }
+
     fun resetSorting() {
         fetchPopularMovies()
         _currentSortOption.value = null
     }
 
+    fun updateFilters(selected: List<FilterOption>) {
+        _selectedFilters.value = selected
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        val originalMovies = _movieResponse.value?.results ?: return
+
+        var filtered = originalMovies
+
+        selectedFilters.value.forEach { filter ->
+            filtered = when (filter) {
+                FilterOption.IMDB_ABOVE_5 -> filtered.filter { it.vote_average >= 5 }
+                FilterOption.IMDB_ABOVE_7 -> filtered.filter { it.vote_average >= 7 }
+                FilterOption.IMDB_ABOVE_8 -> filtered.filter { it.vote_average >= 8 }
+                FilterOption.YEAR_AFTER_1990 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 1990 }
+                FilterOption.YEAR_AFTER_2000 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2000 }
+                FilterOption.YEAR_AFTER_2010 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2010 }
+                FilterOption.YEAR_AFTER_2020 -> filtered.filter { (it.release_date.take(4).toIntOrNull() ?: 0) >= 2020 }
+            }
+        }
+
+        _movieResponse.value = _movieResponse.value?.copy(results = filtered)
+    }
 }
