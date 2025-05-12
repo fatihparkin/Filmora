@@ -1,11 +1,13 @@
 package com.fatihparkin.filmora.presentation.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fatihparkin.filmora.data.repository.MovieRepository
 import com.fatihparkin.filmora.data.model.MovieResponse
 import com.fatihparkin.filmora.data.mapper.toMovieEntityList
 import com.fatihparkin.filmora.data.mapper.toMovieList
+import com.fatihparkin.filmora.util.NetworkUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,23 +33,26 @@ class HomeViewModel @Inject constructor(
 
     private var originalMovies = emptyList<com.fatihparkin.filmora.data.model.Movie>()
 
-    fun fetchPopularMovies() {
+    fun fetchPopularMovies(context: Context) {
         viewModelScope.launch {
-            try {
-                val response = movieRepository.getPopularMovies()
-                if (response.isSuccessful && response.body() != null) {
-                    val movieResponse = response.body()!!
-                    originalMovies = movieResponse.results
-                    _movieResponse.value = movieResponse
-
-                    // Room'a kaydet
-                    movieRepository.refreshPopularMovies(movieResponse.toMovieEntityList())
-                } else {
-                    _errorMessage.value = "Sunucudan veri alınamadı: ${response.message()}"
+            if (NetworkUtils.isNetworkAvailable(context)) {
+                try {
+                    val response = movieRepository.getPopularMovies()
+                    if (response.isSuccessful && response.body() != null) {
+                        val movieResponse = response.body()!!
+                        originalMovies = movieResponse.results
+                        _movieResponse.value = movieResponse
+                        movieRepository.refreshPopularMovies(movieResponse.toMovieEntityList())
+                    } else {
+                        _errorMessage.value = "Sunucudan veri alınamadı: ${response.message()}"
+                        loadLocalMovies()
+                    }
+                } catch (e: Exception) {
+                    _errorMessage.value = "Hata: ${e.localizedMessage}"
                     loadLocalMovies()
                 }
-            } catch (e: Exception) {
-                _errorMessage.value = "Hata: ${e.localizedMessage}"
+            } else {
+                _errorMessage.value = "İnternet bağlantısı yok. Yerel veriler yüklendi."
                 loadLocalMovies()
             }
         }

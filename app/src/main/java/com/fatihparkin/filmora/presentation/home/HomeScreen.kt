@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -20,6 +21,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
+import com.fatihparkin.filmora.util.NetworkUtils
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +40,7 @@ fun HomeScreen(
     val favoriteMovies = favoriteViewModel.favoriteMovies.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
     var activePanel by remember { mutableStateOf<String?>(null) }
@@ -46,6 +50,7 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         favoriteViewModel.loadFavorites()
+        homeViewModel.fetchPopularMovies(context)
     }
 
     Scaffold(
@@ -67,7 +72,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Arama Alanı
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -83,7 +87,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Segment Menü - 4 ikonlu kontrol
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -114,7 +117,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Aktif panelin içeriği
             when (activePanel) {
                 "filtre" -> {
                     Column {
@@ -173,12 +175,10 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Hata mesajı
             errorMessage.value?.let {
                 Text(text = it, color = Color.Red)
             }
 
-            // Film listesi
             movieResponse.value?.results?.let { movies ->
                 val filteredMovies = if (searchQuery.text.isEmpty()) {
                     movies
@@ -202,12 +202,17 @@ fun HomeScreen(
                                 onClick = { onMovieClick(movie.id) },
                                 onFavoriteClick = {
                                     scope.launch {
-                                        if (isFavorite) {
-                                            favoriteViewModel.removeFavorite(movie.id)
-                                            snackbarHostState.showSnackbar("Favorilerden kaldırıldı")
+                                        val user = FirebaseAuth.getInstance().currentUser
+                                        if (user == null || !NetworkUtils.isNetworkAvailable(context)) {
+                                            snackbarHostState.showSnackbar("Favorilere eklemek için internet ve giriş gerekli.")
                                         } else {
-                                            favoriteViewModel.addFavorite(movie)
-                                            snackbarHostState.showSnackbar("Favorilere eklendi")
+                                            if (isFavorite) {
+                                                favoriteViewModel.removeFavorite(movie.id)
+                                                snackbarHostState.showSnackbar("Favorilerden kaldırıldı")
+                                            } else {
+                                                favoriteViewModel.addFavorite(movie)
+                                                snackbarHostState.showSnackbar("Favorilere eklendi")
+                                            }
                                         }
                                     }
                                 }

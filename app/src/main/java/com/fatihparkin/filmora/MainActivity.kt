@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // 🔥 Popüler filmleri çekiyoruz
-        homeViewModel.fetchPopularMovies()
+        homeViewModel.fetchPopularMovies(context = this)
 
         setContent {
             FilmoraTheme {

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.fatihparkin.filmora.presentation.navigation.ScreenRoutes
+import com.fatihparkin.filmora.util.NetworkUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,8 @@ fun LoginScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val isOffline = remember { !NetworkUtils.isNetworkAvailable(context) }
 
     Scaffold(
         snackbarHost = {
@@ -128,6 +131,17 @@ fun LoginScreen(
                     }
                 ) {
                     Text(text = "Hesabın yok mu? Kayıt Ol")
+                }
+
+                // 🔌 İnternetsiz modda göz atma butonu (sadece internet yoksa)
+                if (isOffline) {
+                    TextButton(
+                        onClick = {
+                            navController.navigate(ScreenRoutes.HOME)
+                        }
+                    ) {
+                        Text("İnternetsiz popüler filmlere göz at")
+                    }
                 }
             }
         }
