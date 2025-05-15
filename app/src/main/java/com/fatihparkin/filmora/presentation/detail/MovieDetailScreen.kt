@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Cast
+import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.data.model.Review
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
 import kotlinx.coroutines.launch
@@ -51,6 +54,7 @@ fun MovieDetailScreen(
     val videos = viewModel.videoList.collectAsState().value
     val castList = viewModel.castList.collectAsState().value
     val reviewList = viewModel.reviewList.collectAsState().value
+    val similarMovies = viewModel.similarMovies.collectAsState().value
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -64,6 +68,7 @@ fun MovieDetailScreen(
         viewModel.fetchMovieVideos(movieId)
         viewModel.fetchCast(movieId)
         viewModel.fetchReviews(movieId)
+        viewModel.fetchSimilarMovies(movieId)
         favoriteViewModel.loadFavorites()
     }
 
@@ -78,6 +83,7 @@ fun MovieDetailScreen(
                 },
                 actions = {
                     movie?.let {
+                        // Favori ikonu
                         IconButton(onClick = {
                             if (isFavorite) {
                                 favoriteViewModel.removeFavorite(it.id)
@@ -97,8 +103,26 @@ fun MovieDetailScreen(
                                 tint = if (isFavorite) Color.Red else Color.Gray
                             )
                         }
+
+                        // Paylaş ikonu
+                        IconButton(onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    "🎬 ${movie.title}\nhttps://www.themoviedb.org/movie/${movie.id}"
+                                )
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Filmi paylaş"))
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Paylaş"
+                            )
+                        }
                     }
                 }
+
             )
         },
         containerColor = Color(0xFFEAF6FF),
@@ -131,10 +155,7 @@ fun MovieDetailScreen(
                             .matchParentSize()
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.6f)
-                                    )
+                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
                                 )
                             )
                     )
@@ -184,7 +205,6 @@ fun MovieDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Fragman Butonu
                 // Fragman Embed
                 if (videos.isNotEmpty()) {
                     val trailer = videos.first()
@@ -195,16 +215,11 @@ fun MovieDetailScreen(
                             android.webkit.WebView(it).apply {
                                 settings.javaScriptEnabled = true
                                 loadUrl(videoUrl)
-                                layoutParams = android.view.ViewGroup.LayoutParams(
-                                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                                    600
-                                )
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
-                            .padding(vertical = 8.dp)
                             .clip(RoundedCornerShape(12.dp))
                     )
                 } else {
@@ -216,7 +231,6 @@ fun MovieDetailScreen(
                     )
                 }
 
-
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Oyuncular
@@ -226,13 +240,11 @@ fun MovieDetailScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(castList.take(10)) { cast ->
                             CastItem(cast = cast)
                         }
                     }
-
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
@@ -260,6 +272,48 @@ fun MovieDetailScreen(
                             .padding(vertical = 12.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Benzer Filmler
+                if (similarMovies.isNotEmpty()) {
+                    Text(
+                        text = "Benzer Filmler",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(similarMovies.take(10)) { similar ->
+                            Card(
+                                modifier = Modifier
+                                    .width(140.dp)
+                                    .clickable {
+                                        navController.navigate("movie_detail/${similar.id}")
+                                    },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column {
+                                    Image(
+                                        painter = rememberAsyncImagePainter("https://image.tmdb.org/t/p/w500${similar.poster_path}"),
+                                        contentDescription = similar.title,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Text(
+                                        text = similar.title,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(8.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
         } ?: run {
             Box(
