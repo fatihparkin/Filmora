@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.fatihparkin.filmora.presentation.favorite.screen
 
 import androidx.compose.foundation.Image
@@ -13,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -20,9 +23,9 @@ import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
 import com.fatihparkin.filmora.presentation.navigation.ScreenRoutes
+import com.fatihparkin.filmora.util.NetworkUtils
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoriteScreen(
     viewModel: FavoriteViewModel,
@@ -31,6 +34,8 @@ fun FavoriteScreen(
     val favoriteMovies by viewModel.favoriteMovies.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val isConnected = NetworkUtils.isNetworkAvailable(context)
 
     LaunchedEffect(true) {
         viewModel.loadFavorites()
@@ -49,7 +54,16 @@ fun FavoriteScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
-        if (favoriteMovies.isEmpty()) {
+        if (!isConnected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Favorileri görüntülemek için internet bağlantınızı açın.")
+            }
+        } else if (favoriteMovies.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -104,7 +118,7 @@ fun MovieFavoriteItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
-            .clickable { onMovieClick(movie) } //  Kart tıklanınca detay ekranına yönlendirme
+            .clickable { onMovieClick(movie) }
     ) {
         Row(modifier = Modifier.padding(8.dp)) {
             Image(

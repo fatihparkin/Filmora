@@ -2,8 +2,8 @@
 
 package com.fatihparkin.filmora.presentation.genre
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,10 +21,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fatihparkin.filmora.data.model.Genre
+import com.fatihparkin.filmora.util.NetworkUtils
 
 @Composable
 fun GenreScreen(
@@ -32,6 +34,7 @@ fun GenreScreen(
     navController: NavController,
     onGenreClick: (genreId: Int, genreName: String) -> Unit
 ) {
+    val context = LocalContext.current
     val genreList = viewModel.genreList.collectAsState().value
     val errorMessage = viewModel.errorMessage.collectAsState().value
 
@@ -65,16 +68,25 @@ fun GenreScreen(
                 )
                 .padding(16.dp)
         ) {
-            errorMessage?.let {
-                Text(text = it, color = Color.Red)
-            }
+            if (!NetworkUtils.isNetworkAvailable(context)) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Kategorileri görüntülemek için internet bağlantınızı açınız.", color = Color.Red)
+                }
+            } else {
+                errorMessage?.let {
+                    Text(text = it, color = Color.Red)
+                }
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(genreList) { genre ->
-                    AnimatedGenreCard(genre = genre, onClick = onGenreClick)
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(genreList) { genre ->
+                        AnimatedGenreCard(genre = genre, onClick = onGenreClick)
+                    }
                 }
             }
         }
@@ -96,10 +108,7 @@ fun AnimatedGenreCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(70.dp)
-            .graphicsLayer(
-                scaleX = scale,
-                scaleY = scale
-            )
+            .graphicsLayer(scaleX = scale, scaleY = scale)
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White)
             .clickable(
@@ -108,13 +117,10 @@ fun AnimatedGenreCard(
             ) {
                 pressed = true
                 onClick(genre.id, genre.name)
-            }
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Box(
             contentAlignment = Alignment.CenterStart,
