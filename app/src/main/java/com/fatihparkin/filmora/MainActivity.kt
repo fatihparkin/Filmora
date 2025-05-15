@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.rememberNavController
 import com.fatihparkin.filmora.presentation.home.HomeViewModel
 import com.fatihparkin.filmora.presentation.navigation.FilmoraNavGraph
@@ -30,7 +31,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 🔥 Popüler filmleri çekiyoruz
         homeViewModel.fetchPopularMovies(context = this)
 
         setContent {
@@ -39,10 +39,11 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
 
-                // 🔁 İnternet bağlantısı değişimini dinle
+                // Dinleyici: İnternet bağlantısı değişirse
                 LaunchedEffect(Unit) {
                     ConnectivityState.isConnected.collectLatest { isConnected ->
-                        if (isConnected) {
+                        val currentRoute = navController.currentBackStackEntry?.destination?.route
+                        if (isConnected && currentRoute != "login") {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
                                     message = "İnternet bağlantısı sağlandı. Giriş ekranına yönlendiriliyorsunuz...",
@@ -58,19 +59,14 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // 📡 BroadcastReceiver’ı register et
+                // Broadcast Receiver
                 DisposableEffect(Unit) {
                     val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
                     registerReceiver(connectivityReceiver, filter)
-                    onDispose {
-                        unregisterReceiver(connectivityReceiver)
-                    }
+                    onDispose { unregisterReceiver(connectivityReceiver) }
                 }
 
-                // 🎯 Uygulama içeriği
-                Scaffold(
-                    snackbarHost = { SnackbarHost(snackbarHostState) }
-                ) { paddingValues ->
+                Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
                     Surface(modifier = Modifier.padding(paddingValues)) {
                         FilmoraNavGraph(
                             navController = navController,
