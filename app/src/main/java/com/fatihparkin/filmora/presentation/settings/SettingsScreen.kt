@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -57,19 +58,30 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             if (!isConnected) {
-                // İnternetsiz uyarısı
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "⚠️ Ayarlar sayfasını görüntülemek için internet bağlantısı gereklidir.",
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "⚠️ Ayarlar sayfasını görüntülemek için internet bağlantısı gereklidir.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Red,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-            } else {
+            }
+            else {
                 // Normal içerik
                 LazyColumn(
                     modifier = Modifier.weight(1f)

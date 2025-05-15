@@ -15,8 +15,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -61,9 +63,24 @@ fun FavoriteScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Favorileri görüntülemek için internet bağlantınızı açın.")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Outlined.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "⚠️ Favorileri görüntülemek için internet bağlantısı gereklidir.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
-        } else if (favoriteMovies.isEmpty()) {
+        }
+        else if (favoriteMovies.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
