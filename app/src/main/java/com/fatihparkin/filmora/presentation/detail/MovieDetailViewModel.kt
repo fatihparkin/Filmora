@@ -30,6 +30,9 @@ class MovieDetailViewModel @Inject constructor(
     private val _reviewList = MutableStateFlow<List<Review>>(emptyList())
     val reviewList: StateFlow<List<Review>> = _reviewList
 
+    private val _similarMovies = MutableStateFlow<List<Movie>>(emptyList())
+    val similarMovies: StateFlow<List<Movie>> = _similarMovies
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
@@ -89,6 +92,21 @@ class MovieDetailViewModel @Inject constructor(
                     _reviewList.value = response.body()?.results ?: emptyList()
                 } else {
                     _errorMessage.value = "Yorumlar alınamadı"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.localizedMessage
+            }
+        }
+    }
+
+    fun fetchSimilarMovies(movieId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = repository.getSimilarMovies(movieId)
+                if (response.isSuccessful) {
+                    _similarMovies.value = response.body()?.results ?: emptyList()
+                } else {
+                    _errorMessage.value = "Benzer filmler alınamadı"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.localizedMessage
