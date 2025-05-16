@@ -32,7 +32,8 @@ fun HomeScreen(
     onNavigateToGenres: () -> Unit,
     onMovieClick: (Int) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToFavorites: () -> Unit
+    onNavigateToFavorites: () -> Unit,
+    onNavigateToProfile: () -> Unit
 ) {
     val movieResponse = homeViewModel.movieResponse.collectAsState(initial = null)
     val errorMessage = homeViewModel.errorMessage.collectAsState(initial = null)
@@ -58,10 +59,14 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("Filmora") },
                 actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Profil")
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Ayarlar")
                     }
                 }
+
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
