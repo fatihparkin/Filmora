@@ -40,6 +40,7 @@ import com.fatihparkin.filmora.data.model.Cast
 import com.fatihparkin.filmora.data.model.Movie
 import com.fatihparkin.filmora.data.model.Review
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
+import com.fatihparkin.filmora.presentation.profile.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -51,6 +52,14 @@ fun MovieDetailScreen(
     favoriteViewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val movie = viewModel.movieDetail.collectAsState().value
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+
+    LaunchedEffect(movie) {
+        movie?.let {
+            profileViewModel.saveViewedMovie(it)
+        }
+    }
+
     val videos = viewModel.videoList.collectAsState().value
     val castList = viewModel.castList.collectAsState().value
     val reviewList = viewModel.reviewList.collectAsState().value
