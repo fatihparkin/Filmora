@@ -15,6 +15,8 @@ import com.fatihparkin.filmora.presentation.genre.GenreViewModel
 import com.fatihparkin.filmora.presentation.home.HomeScreen
 import com.fatihparkin.filmora.presentation.home.HomeViewModel
 import com.fatihparkin.filmora.presentation.login.LoginScreen
+import com.fatihparkin.filmora.presentation.profile.ProfileScreen
+import com.fatihparkin.filmora.presentation.profile.viewmodel.ProfileViewModel
 import com.fatihparkin.filmora.presentation.register.RegisterScreen
 import com.fatihparkin.filmora.presentation.settings.SettingsScreen
 
@@ -27,6 +29,8 @@ object ScreenRoutes {
     const val MOVIE_DETAIL = "movie_detail"
     const val SETTINGS = "settings"
     const val FAVORITES = "favorites"
+    const val PROFILE = "profile"
+
 }
 
 @Composable
@@ -60,7 +64,9 @@ fun FilmoraNavGraph(
                 },
                 onNavigateToFavorites = {
                     navController.navigate(ScreenRoutes.FAVORITES)
-                }
+                },
+                onNavigateToProfile = { navController.navigate(ScreenRoutes.PROFILE) }
+
             )
         }
 
@@ -109,5 +115,10 @@ fun FilmoraNavGraph(
             val viewModel: FavoriteViewModel = hiltViewModel()
             FavoriteScreen(viewModel = viewModel, navController = navController)
         }
+        composable(ScreenRoutes.PROFILE) {
+            val viewModel: ProfileViewModel = hiltViewModel()
+            ProfileScreen(navController = navController, viewModel = viewModel)
+        }
+
     }
 }
