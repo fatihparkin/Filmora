@@ -192,23 +192,6 @@ fun SettingsScreen(
                         }
                     }
                 }
-
-                Button(
-                    onClick = {
-                        FirebaseAuth.getInstance().signOut()
-                        navController.navigate(ScreenRoutes.LOGIN) {
-                            popUpTo(0)
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                ) {
-                    Text("Çıkış Yap", color = MaterialTheme.colorScheme.onError)
-                }
             }
         }
     }
