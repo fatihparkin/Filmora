@@ -3,7 +3,7 @@
 package com.fatihparkin.filmora.presentation.detail
 
 import android.content.Intent
-import android.net.Uri
+import android.webkit.WebView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,34 +13,40 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.fatihparkin.filmora.data.model.Cast
 import com.fatihparkin.filmora.data.model.Movie
+import com.fatihparkin.filmora.data.model.MovieReview
 import com.fatihparkin.filmora.data.model.Review
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
 import com.fatihparkin.filmora.presentation.profile.viewmodel.ProfileViewModel
+import com.fatihparkin.filmora.presentation.review.viewmodel.ReviewViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -49,21 +55,19 @@ fun MovieDetailScreen(
     movieId: Int,
     viewModel: MovieDetailViewModel,
     navController: NavController,
-    favoriteViewModel: FavoriteViewModel = hiltViewModel()
+    favoriteViewModel: FavoriteViewModel = hiltViewModel(),
+    reviewViewModel: ReviewViewModel = hiltViewModel()
 ) {
     val movie = viewModel.movieDetail.collectAsState().value
     val profileViewModel: ProfileViewModel = hiltViewModel()
 
-    LaunchedEffect(movie) {
-        movie?.let {
-            profileViewModel.saveViewedMovie(it)
-        }
-    }
+    val firebaseUser = FirebaseAuth.getInstance().currentUser
+    val isLoggedIn = firebaseUser != null
 
-    val videos = viewModel.videoList.collectAsState().value
-    val castList = viewModel.castList.collectAsState().value
-    val reviewList = viewModel.reviewList.collectAsState().value
-    val similarMovies = viewModel.similarMovies.collectAsState().value
+    val userReviews by reviewViewModel.userReviews.collectAsState()
+    val isLoading by reviewViewModel.isLoading.collectAsState()
+    val reviewText = remember { mutableStateOf(TextFieldValue()) }
+
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -72,6 +76,11 @@ fun MovieDetailScreen(
     val favoriteMovies = favoriteViewModel.favoriteMovies.collectAsState()
     val isFavorite = favoriteMovies.value.any { it.id == movie?.id }
 
+    val videos = viewModel.videoList.collectAsState().value
+    val castList = viewModel.castList.collectAsState().value
+    val reviewList = viewModel.reviewList.collectAsState().value
+    val similarMovies = viewModel.similarMovies.collectAsState().value
+
     LaunchedEffect(movieId) {
         viewModel.fetchMovieDetail(movieId)
         viewModel.fetchMovieVideos(movieId)
@@ -79,6 +88,8 @@ fun MovieDetailScreen(
         viewModel.fetchReviews(movieId)
         viewModel.fetchSimilarMovies(movieId)
         favoriteViewModel.loadFavorites()
+        reviewViewModel.fetchReviews(movieId)
+        movie?.let { profileViewModel.saveViewedMovie(it) }
     }
 
     Scaffold(
@@ -92,7 +103,6 @@ fun MovieDetailScreen(
                 },
                 actions = {
                     movie?.let {
-                        // Favori ikonu
                         IconButton(onClick = {
                             if (isFavorite) {
                                 favoriteViewModel.removeFavorite(it.id)
@@ -112,32 +122,22 @@ fun MovieDetailScreen(
                                 tint = if (isFavorite) Color.Red else Color.Gray
                             )
                         }
-
-                        // Paylaş ikonu
                         IconButton(onClick = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(
-                                    Intent.EXTRA_TEXT,
-                                    "🎬 ${movie.title}\nhttps://www.themoviedb.org/movie/${movie.id}"
-                                )
+                                putExtra(Intent.EXTRA_TEXT, "🎬 ${movie.title}\nhttps://www.themoviedb.org/movie/${movie.id}")
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Filmi paylaş"))
                         }) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Paylaş"
-                            )
+                            Icon(Icons.Default.Share, contentDescription = "Paylaş")
                         }
                     }
                 }
-
             )
         },
-        containerColor = Color(0xFFEAF6FF),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color(0xFFEAF6FF)
     ) { innerPadding ->
-
         movie?.let {
             Column(
                 modifier = Modifier
@@ -146,7 +146,7 @@ fun MovieDetailScreen(
                     .padding(innerPadding)
                     .padding(16.dp)
             ) {
-                // Backdrop
+                // BACKDROP
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -180,7 +180,7 @@ fun MovieDetailScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // IMDB
+                // IMDB PUANI
                 Text("IMDB Puanı", style = MaterialTheme.typography.labelLarge)
                 LinearProgressIndicator(
                     progress = (movie.vote_average?.toFloat() ?: 0f) / 10f,
@@ -205,7 +205,6 @@ fun MovieDetailScreen(
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Text(
                     text = movie.overview ?: "Açıklama bulunamadı.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -214,14 +213,13 @@ fun MovieDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Fragman Embed
+                // FRAGMAN
                 if (videos.isNotEmpty()) {
                     val trailer = videos.first()
                     val videoUrl = "https://www.youtube.com/embed/${trailer.key}"
-
                     AndroidView(
                         factory = {
-                            android.webkit.WebView(it).apply {
+                            WebView(it).apply {
                                 settings.javaScriptEnabled = true
                                 loadUrl(videoUrl)
                             }
@@ -242,7 +240,7 @@ fun MovieDetailScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Oyuncular
+                // OYUNCULAR
                 if (castList.isNotEmpty()) {
                     Text(
                         text = "Oyuncular",
@@ -254,43 +252,75 @@ fun MovieDetailScreen(
                             CastItem(cast = cast)
                         }
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-
-                // Yorumlar
-                Text(
-                    text = "Yorumlar",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                if (reviewList.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        reviewList.take(3).forEach { review ->
-                            ReviewCard(review)
-                        }
-                    }
-                } else {
-                    Text(
-                        text = "Henüz bu film için bir yorum yapılmamış.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 12.dp)
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Benzer Filmler
-                if (similarMovies.isNotEmpty()) {
-                    Text(
-                        text = "Benzer Filmler",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                // TMDB YORUMLARI
+                Text("TMDB Yorumları", style = MaterialTheme.typography.titleMedium)
+                if (reviewList.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        reviewList.forEach { review ->
+                            ReviewCard(review)
+                        }
+                    }
+                } else {
+                    Text("TMDB'den yorum bulunamadı.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // FIREBASE YORUMLARI
+                Text("Kullanıcı Yorumları", style = MaterialTheme.typography.titleMedium)
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.padding(12.dp))
+                } else {
+                    if (userReviews.isEmpty()) {
+                        Text("Henüz kullanıcı yorumu yok.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            userReviews.forEach { review ->
+                                MovieReviewCard(review)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (isLoggedIn) {
+                    OutlinedTextField(
+                        value = reviewText.value,
+                        onValueChange = { reviewText.value = it },
+                        placeholder = { Text("Yorum yaz...") },
+                        modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            if (reviewText.value.text.isNotBlank()) {
+                                reviewViewModel.submitReview(movieId, reviewText.value.text) {
+                                    reviewText.value = TextFieldValue("")
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Yorum gönderildi")
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.End),
+                        enabled = reviewText.value.text.isNotBlank()
+                    ) {
+                        Text("Gönder")
+                    }
+                } else {
+                    Text("Yorum yapabilmek için giriş yapmalısınız.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // BENZER FİLMLER
+                if (similarMovies.isNotEmpty()) {
+                    Text("Benzer Filmler", style = MaterialTheme.typography.titleMedium)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(similarMovies.take(10)) { similar ->
                             Card(
@@ -322,7 +352,6 @@ fun MovieDetailScreen(
                         }
                     }
                 }
-
             }
         } ?: run {
             Box(
@@ -333,6 +362,50 @@ fun MovieDetailScreen(
             ) {
                 CircularProgressIndicator()
             }
+        }
+    }
+}
+
+@Composable
+fun ReviewCard(review: Review) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = review.author,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color(0xFF1E88E5)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (review.content.length > 200) review.content.take(200) + "..." else review.content,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+fun MovieReviewCard(review: MovieReview) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = review.userEmail,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color(0xFF1E88E5)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = review.content,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }
@@ -364,29 +437,5 @@ fun CastItem(cast: Cast) {
             textAlign = TextAlign.Center,
             maxLines = 1
         )
-    }
-}
-
-@Composable
-fun ReviewCard(review: Review) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(6.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = review.author,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color(0xFF1E88E5)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = review.content,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 5,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
     }
 }

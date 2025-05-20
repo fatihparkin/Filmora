@@ -86,6 +86,7 @@ fun FilmoraNavGraph(
             val genreId = backStackEntry.arguments?.getString("genreId")?.toIntOrNull() ?: return@composable
             val genreName = backStackEntry.arguments?.getString("genreName") ?: return@composable
             val genreViewModel: GenreViewModel = hiltViewModel()
+
             GenreMoviesScreen(
                 genreId = genreId,
                 genreName = genreName,
@@ -93,9 +94,13 @@ fun FilmoraNavGraph(
                 navController = navController,
                 onMovieClick = { movieId ->
                     navController.navigate("${ScreenRoutes.MOVIE_DETAIL}/$movieId")
-                }
+                },
+                onNavigateToFavorites = {
+                    navController.navigate(ScreenRoutes.FAVORITES)
+                } // BU PARAMETRE EKLENDİ
             )
         }
+
 
         composable("${ScreenRoutes.MOVIE_DETAIL}/{movieId}") { backStackEntry ->
             val movieId = backStackEntry.arguments?.getString("movieId")?.toIntOrNull() ?: return@composable

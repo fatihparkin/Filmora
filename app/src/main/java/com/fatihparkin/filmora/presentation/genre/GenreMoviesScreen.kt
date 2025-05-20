@@ -1,3 +1,4 @@
+// 🔽 SATIR 1
 package com.fatihparkin.filmora.presentation.genre
 
 import androidx.compose.foundation.Image
@@ -31,7 +32,8 @@ fun GenreMoviesScreen(
     genreName: String,
     viewModel: GenreViewModel,
     navController: NavController,
-    onMovieClick: (Int) -> Unit
+    onMovieClick: (Int) -> Unit,
+    onNavigateToFavorites: () -> Unit // ⭐ yeni eklendi
 ) {
     val movies = viewModel.moviesByGenre.collectAsState().value
     val errorMessage = viewModel.errorMessage.collectAsState().value
@@ -59,11 +61,17 @@ fun GenreMoviesScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Geri")
                     }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToFavorites) {
+                        Icon(Icons.Default.FavoriteBorder, contentDescription = "Favoriler")
+                    }
                 }
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -81,21 +89,26 @@ fun GenreMoviesScreen(
                     .padding(bottom = 12.dp)
             )
 
+            // 🔽 Menü Butonları
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                listOf("Filtre", "Sırala").forEach { item ->
-                    OutlinedButton(
-                        onClick = { selectedSegment = if (selectedSegment == item) null else item },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (selectedSegment == item) MaterialTheme.colorScheme.primary else Color.Transparent,
-                            contentColor = if (selectedSegment == item) Color.White else MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Text(item)
-                    }
+                IconButton(onClick = {
+                    selectedSegment = if (selectedSegment == "Filtre") null else "Filtre"
+                }) {
+                    Icon(Icons.Default.Tune, contentDescription = "Filtrele")
+                }
+                IconButton(onClick = {
+                    selectedSegment = if (selectedSegment == "Sırala") null else "Sırala"
+                }) {
+                    Icon(Icons.Default.Sort, contentDescription = "Sırala")
+                }
+                IconButton(onClick = {
+                    onNavigateToFavorites()
+                    selectedSegment = null
+                }) {
+                    Icon(Icons.Default.FavoriteBorder, contentDescription = "Favoriler")
                 }
             }
 
