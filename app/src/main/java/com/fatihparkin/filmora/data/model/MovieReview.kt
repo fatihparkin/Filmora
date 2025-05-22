@@ -6,5 +6,6 @@ data class MovieReview(
     val userEmail: String = "",
     val movieId: Int = 0,
     val content: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isEdited: Boolean = false // Düzenlendi bilgisi için eklendi
 )

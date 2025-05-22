@@ -43,9 +43,33 @@ class ReviewModel @Inject constructor(
             try {
                 repository.addReview(movieId, content)
                 onSuccess()
-                fetchReviews(movieId) // yorumu hemen göster
+                fetchReviews(movieId)
             } catch (e: Exception) {
                 _errorMessage.value = "Yorum eklenemedi: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    fun deleteReview(reviewId: String, movieId: Int, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.deleteReview(reviewId)
+                fetchReviews(movieId)
+                onSuccess()
+            } catch (e: Exception) {
+                _errorMessage.value = "Yorum silinemedi: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    fun updateReview(reviewId: String, newContent: String, movieId: Int, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.updateReview(reviewId, newContent)
+                fetchReviews(movieId)
+                onSuccess()
+            } catch (e: Exception) {
+                _errorMessage.value = "Yorum güncellenemedi: ${e.localizedMessage}"
             }
         }
     }

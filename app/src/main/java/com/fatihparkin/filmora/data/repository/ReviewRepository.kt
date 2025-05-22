@@ -28,9 +28,10 @@ class ReviewRepository @Inject constructor() {
         val newReview = hashMapOf(
             "userId" to userId,
             "userEmail" to email,
-            "movieId" to movieId.toLong(), // Firestore uyumu için garantiye alındı
+            "movieId" to movieId.toLong(),
             "content" to content,
-            "timestamp" to System.currentTimeMillis()
+            "timestamp" to System.currentTimeMillis(),
+            "isEdited" to false
         )
 
         firestore.collection("movie_reviews")
@@ -47,7 +48,7 @@ class ReviewRepository @Inject constructor() {
     suspend fun getReviewsForMovie(movieId: Int): List<MovieReview> {
         return try {
             val snapshot = firestore.collection("movie_reviews")
-                .whereEqualTo("movieId", movieId.toLong()) // 🔧 kritik nokta!
+                .whereEqualTo("movieId", movieId.toLong())
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .await()
@@ -61,6 +62,7 @@ class ReviewRepository @Inject constructor() {
                 val content = doc.getString("content") ?: ""
                 val ts = doc.getLong("timestamp") ?: 0L
                 val mId = doc.getLong("movieId")?.toInt() ?: return@mapNotNull null
+                val isEdited = doc.getBoolean("isEdited") ?: false
 
                 MovieReview(
                     id = id,
@@ -68,13 +70,42 @@ class ReviewRepository @Inject constructor() {
                     userEmail = userEmail,
                     movieId = mId,
                     content = content,
-                    timestamp = ts
+                    timestamp = ts,
+                    isEdited = isEdited
                 )
             }
 
         } catch (e: Exception) {
             Log.e("ReviewRepo", "Yorumları alırken hata oluştu: ${e.localizedMessage}")
             emptyList()
+        }
+    }
+
+    suspend fun deleteReview(reviewId: String) {
+        try {
+            firestore.collection("movie_reviews").document(reviewId)
+                .delete()
+                .await()
+            Log.d("ReviewRepo", "Yorum silindi: $reviewId")
+        } catch (e: Exception) {
+            Log.e("ReviewRepo", "Yorum silme hatası: ${e.localizedMessage}")
+        }
+    }
+
+    suspend fun updateReview(reviewId: String, newContent: String) {
+        try {
+            firestore.collection("movie_reviews").document(reviewId)
+                .update(
+                    mapOf(
+                        "content" to newContent,
+                        "isEdited" to true,
+                        "timestamp" to System.currentTimeMillis()
+                    )
+                )
+                .await()
+            Log.d("ReviewRepo", "Yorum güncellendi: $reviewId")
+        } catch (e: Exception) {
+            Log.e("ReviewRepo", "Yorum güncelleme hatası: ${e.localizedMessage}")
         }
     }
 }

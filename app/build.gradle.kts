@@ -96,7 +96,7 @@ dependencies {
     // Firebase
     implementation(libs.firebase.auth)
     implementation(libs.firebase.analytics)
-    implementation ("com.google.firebase:firebase-auth-ktx:22.3.0")
+    implementation(libs.google.firebase.auth.ktx)
     implementation("com.google.firebase:firebase-firestore-ktx:24.10.3")
     implementation(libs.compose.material.icons.extended)
 
