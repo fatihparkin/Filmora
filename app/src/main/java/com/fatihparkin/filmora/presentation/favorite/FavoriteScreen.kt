@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.fatihparkin.filmora.presentation.favorite.screen
+package com.fatihparkin.filmora.presentation.favorite
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable

@@ -6,24 +6,26 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import com.fatihparkin.filmora.util.ApiKeyProvider
+
 
 interface ApiService {
 
     @GET("movie/popular")
     suspend fun getPopularMovies(
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
         @Query("page") page: Int = 1
     ): Response<MovieResponse>
 
     @GET("genre/movie/list")
     suspend fun getGenres(
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
         @Query("language") language: String = "en-US"
     ): Response<GenreResponse>
 
     @GET("discover/movie")
     suspend fun getMoviesByGenre(
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
         @Query("with_genres") genreId: Int,
         @Query("page") page: Int = 1
     ): Response<MovieResponse>
@@ -31,32 +33,32 @@ interface ApiService {
     @GET("movie/{movie_id}")
     suspend fun getMovieDetail(
         @Path("movie_id") movieId: Int,
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
     ): Response<Movie>
 
     @GET("movie/{movie_id}/videos")
     suspend fun getMovieVideos(
         @Path("movie_id") movieId: Int,
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
     ): Response<VideoResponse>
 
     @GET("movie/{movie_id}/credits")
     suspend fun getMovieCredits(
         @Path("movie_id") movieId: Int,
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
     ): Response<CastResponse>
 
     @GET("movie/{movie_id}/reviews")
     suspend fun getMovieReviews(
         @Path("movie_id") movieId: Int,
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
         @Query("page") page: Int = 1
     ): Response<ReviewResponse>
 
     @GET("movie/{movie_id}/similar")
     suspend fun getSimilarMovies(
         @Path("movie_id") movieId: Int,
-        @Query("api_key") apiKey: String = BuildConfig.TMDB_API_KEY,
+        @Query("api_key") apiKey: String = ApiKeyProvider.getApiKey(),
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1
     ): Response<MovieResponse>

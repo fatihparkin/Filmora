@@ -7,7 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.fatihparkin.filmora.presentation.detail.MovieDetailScreen
 import com.fatihparkin.filmora.presentation.detail.MovieDetailViewModel
-import com.fatihparkin.filmora.presentation.favorite.screen.FavoriteScreen
+import com.fatihparkin.filmora.presentation.favorite.FavoriteScreen
 import com.fatihparkin.filmora.presentation.favorite.viewmodel.FavoriteViewModel
 import com.fatihparkin.filmora.presentation.genre.GenreMoviesScreen
 import com.fatihparkin.filmora.presentation.genre.GenreScreen

@@ -1,6 +1,7 @@
 package com.fatihparkin.filmora.data.remote
 
 import com.fatihparkin.filmora.BuildConfig
+import com.fatihparkin.filmora.util.ApiKeyProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,7 @@ object NetworkModule {
             .readTimeout(30, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${BuildConfig.TMDB_API_KEY}") // API key ekleniyor
+                    .addHeader("Authorization", "Bearer ${ApiKeyProvider.getApiKey()}") // API key ekleniyor
                     .build()
                 chain.proceed(request)
             }

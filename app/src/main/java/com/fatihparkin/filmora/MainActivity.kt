@@ -17,6 +17,7 @@ import com.fatihparkin.filmora.presentation.navigation.FilmoraNavGraph
 import com.fatihparkin.filmora.ui.theme.FilmoraTheme
 import com.fatihparkin.filmora.util.ConnectivityReceiver
 import com.fatihparkin.filmora.util.ConnectivityState
+import com.fatihparkin.filmora.util.RemoteConfigHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -31,6 +32,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Popüler filmleri yükle
         homeViewModel.fetchPopularMovies(context = this)
 
         setContent {
@@ -39,7 +41,12 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
 
-                // Dinleyici: İnternet bağlantısı değişirse
+                // 🔥 Remote Config başlatılıyor
+                LaunchedEffect(Unit) {
+                    RemoteConfigHelper // bu satırla init tetiklenir, fetchAndActivate çalışır
+                }
+
+                // 🌐 İnternet bağlantısı değişince snackbar göster
                 LaunchedEffect(Unit) {
                     ConnectivityState.isConnected.collectLatest { isConnected ->
                         val currentRoute = navController.currentBackStackEntry?.destination?.route

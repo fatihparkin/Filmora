@@ -55,6 +55,9 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fatihparkin.filmora.util.ConnectivityState
+
+
 
 @Composable
 fun MovieDetailScreen(
@@ -64,35 +67,72 @@ fun MovieDetailScreen(
     favoriteViewModel: FavoriteViewModel = hiltViewModel(),
     reviewViewModel: ReviewModel = hiltViewModel()
 ) {
+    val isConnected by ConnectivityState.isConnected.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // ⚠️ Eğer internet yoksa direkt uyarı göster ve sayfadan çık
+    if (!isConnected) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Film Detayı") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Geri")
+                        }
+                    }
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = Color(0xFFEAF6FF)
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Outlined.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "⚠️ Detayları görüntülemek için internet bağlantısı gereklidir.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+        return // Sayfanın geri kalanını çalıştırma
+    }
+
+    // ✅ İnternet varsa devam...
     val movie = viewModel.movieDetail.collectAsState().value
     val profileViewModel: ProfileViewModel = hiltViewModel()
-
     val firebaseUser = FirebaseAuth.getInstance().currentUser
     val isLoggedIn = firebaseUser != null
-
     val userReviews by reviewViewModel.userReviews.collectAsState()
     val isLoading by reviewViewModel.isLoading.collectAsState()
     val reviewText = remember { mutableStateOf(TextFieldValue()) }
-
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
     val favoriteMovies = favoriteViewModel.favoriteMovies.collectAsState()
     val isFavorite = favoriteMovies.value.any { it.id == movie?.id }
-
     val videos = viewModel.videoList.collectAsState().value
     val castList = viewModel.castList.collectAsState().value
     val reviewList = viewModel.reviewList.collectAsState().value
     val similarMovies = viewModel.similarMovies.collectAsState().value
-
     val currentUserId = firebaseUser?.uid
     var showAllTmdbReviews by remember { mutableStateOf(false) }
-    var editMode by remember { mutableStateOf(false) }
-    var editingReviewId by remember { mutableStateOf("") }
 
-
+    // Verileri çek (sadece bir kez)
     LaunchedEffect(movieId) {
         viewModel.fetchMovieDetail(movieId)
         viewModel.fetchMovieVideos(movieId)
