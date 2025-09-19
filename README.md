@@ -153,12 +153,6 @@ All requests inject the API key via an interceptor/provider.
 
 ---
 
-## 🤝 Contributing
-
-Contributions via Pull Requests are welcome. Keep PRs small and focused; add tests where reasonable and confirm local lint checks before submitting.
-
----
-
 ## ⚖️ License — Filmora Personal & Educational License (FPEL‑1.0)
 
 **Copyright (c) 2025 Fatih Parkın**
