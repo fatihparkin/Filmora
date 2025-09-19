@@ -6,7 +6,6 @@ Filmora is a modern Android app for discovering movies: browse popular titles, f
 > **Min SDK:** 29 (Android 10) • **Target SDK:** 35  
 > **Kotlin:** 1.9.x • **Compose Compiler:** 1.5.11
 
-> _Note: This README intentionally **omits installation/setup instructions** as requested._
 
 ---
 
