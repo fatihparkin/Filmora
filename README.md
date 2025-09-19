@@ -163,12 +163,3 @@ Contributions via Pull Requests are welcome. Keep PRs small and focused; add tes
 
 **Copyright (c) 2025 Fatih Parkın**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and distribute the Software **for personal, educational, or non‑commercial purposes only**, subject to the following conditions:
-
-1. **Attribution.** You must retain the above copyright notice and this license in all copies or substantial portions of the Software.  
-2. **Non‑Commercial Use.** Commercial use of the Software, in whole or in part, is **not permitted** without prior written permission from the copyright holder.  
-3. **No Trademark License.** The names “Filmora” and “Fatih Parkın” are not licensed under this agreement.  
-4. **No Liability.** THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
-5. **Commercial Licensing.** For commercial licensing inquiries, please contact the copyright holder.
-
-If you prefer a standard open‑source license (MIT/Apache‑2.0), replace this section with your chosen license.
